@@ -69,7 +69,6 @@ exports.genre_create_post = [
     } else {
       // Data from form is valid.
       // Check if Genre with same name already exists.
-      // Check if Genre with same name already exists.
       const genreExists = await Genre.findOne({ name: req.body.name })
         .collation({ locale: "en", strength: 2 })
         .exec();
@@ -87,12 +86,43 @@ exports.genre_create_post = [
 
 // Display Genre delete form on GET.
 exports.genre_delete_get = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: Genre delete GET");
+  // Get all details of genre and asociated books
+  const [genre, allBooks] = await Promise.all([
+    Genre.findById(req.params.id).exec(),
+    Book.find({ genre: req.params.id }).sort({ title: 1 }).exec(),
+  ]);
+
+  if (genre === null) {
+    // No results
+    res.redirect("/catalog/genres");
+  } else {
+    res.render("genre_delete", {
+      title: "Delete Genre",
+      genre: genre,
+      books: allBooks,
+    });
+  }
 });
 
 // Handle Genre delete on POST.
 exports.genre_delete_post = asyncHandler(async (req, res, next) => {
-  res.send("NOT IMPLEMENTED: Genre delete POST");
+  // Get all details of genre and asociated books
+  const [genre, allBooks] = await Promise.all([
+    Genre.findById(req.params.id).exec(),
+    Book.find({ genre: req.params.id }).sort({ title: 1 }).exec(),
+  ]);
+
+  if (allBooks > 0) {
+    // Genre has books
+    res.render("genre_delete", {
+      title: "Delete Genre",
+      genre: genre,
+      books: allBooks,
+    });
+  } else {
+    await Genre.findByIdAndDelete(req.body.genreid);
+    res.redirect("/catalog/genres");
+  }
 });
 
 // Display Genre update form on GET.
